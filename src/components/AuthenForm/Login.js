@@ -14,10 +14,6 @@ const Login = () => {
   const [status, setStatus] = useState("");
 
   const UpdateUser = async (loginResponse, tokenDevice) => {
-  // const [userDetail] = React.useState(JSON.parse(localStorage.getItem("auth")));
-  // console.log("loginResponse" + loginResponse + " token" + tokenDevice)
-    console.log( loginResponse);
-
     const response = await fetch(hostUsers + loginResponse.id, {
       method: "PUT",
       headers: {
@@ -60,10 +56,7 @@ const Login = () => {
 
     if (response.ok) {
       const loginResponse = await response.json();
-      // console.log( "loginResponse");
-      // console.log( loginResponse);
       localStorage.setItem("auth", JSON.stringify(loginResponse));
-      // console.log(tokenDevice);
       if (loginResponse.roles[0] === "ROLE_QL") {
         if (loginResponse.tokenDevice !== tokenDevice) {
           UpdateUser(loginResponse, tokenDevice)

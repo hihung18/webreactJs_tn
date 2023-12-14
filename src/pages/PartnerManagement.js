@@ -113,18 +113,18 @@ const UsersManagement = () => {
               Add Partner
             </Button>
           </div>
-          <div className="card">
-            <div className="card-body">
+          <div className="bg">
+            <div className="bg-body">
               <Table className="table-products table-hover">
                 <thead>
-                  <tr>
-                    <th>STT</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Address</th>
-                    <th>Status</th>
-                    <th>Update</th>
+                  <tr style={{ color: "black", fontSize: "14px" }} >
+                    <th style={{ width: "60px" }}>STT</th>
+                    <th style={{ width: "250px" }}>Name</th>
+                    <th style={{ width: "200px" }}>Email</th>
+                    <th >Phone</th>
+                    <th style={{ width: "200px" }}>Address</th>
+                    <th style={{ width: "150px" }}>Status</th>
+                    <th style={{ width: "100px" }}>Update</th>
                     {/* <th>Delete</th> */}
                   </tr>
                 </thead>

@@ -133,10 +133,10 @@ a {
   width: 180px;
   height: 40px;
 }
-.shop {
+.app {
   margin-right: 20px;
 }
-.shop-name {
+.app-name {
   font-weight: 900;
   font-size: 34px;
   letter-spacing: 3px;
@@ -155,7 +155,7 @@ a {
 
 .btn-cont .btn {
   position: relative;
-  width: 140px;
+  width: 170px;
   border: 1px solid rgb(0, 0, 0);
   color: rgb(0, 0, 0);
   text-decoration: none;
@@ -225,75 +225,8 @@ a {
   bottom: 0;
 }
 
-@keyframes move1 {
-  0% {
-    height: 100%;
-    bottom: 0;
-  }
-  54% {
-    height: 0;
-    bottom: 100%;
-  }
-  55% {
-    height: 0;
-    bottom: 0;
-  }
-  100% {
-    height: 100%;
-    bottom: 0;
-  }
-}
 
-@keyframes move2 {
-  0% {
-    width: 0;
-    left: 0;
-  }
-  50% {
-    width: 100%;
-    left: 0;
-  }
-  100% {
-    width: 0;
-    left: 100%;
-  }
-}
-
-@keyframes move3 {
-  0% {
-    height: 100%;
-    top: 0;
-  }
-  54% {
-    height: 0;
-    top: 100%;
-  }
-  55% {
-    height: 0;
-    top: 0;
-  }
-  100% {
-    height: 100%;
-    top: 0;
-  }
-}
-
-@keyframes move4 {
-  0% {
-    width: 0;
-    right: 0;
-  }
-  55% {
-    width: 100%;
-    right: 0;
-  }
-  100% {
-    width: 0;
-    right: 100%;
-  }
-}
-
-/* shopname */
+/* appname */
 
 
 .button {
@@ -398,7 +331,7 @@ div.row {
   align-items: center;
 }
 
-.card {
+.bg {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -411,39 +344,38 @@ div.row {
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 660px;
+  height: auto;
   overflow: auto;
 }
-
-.card > hr {
+.bg > hr {
   margin-right: 0;
   margin-left: 0;
 }
 
-.card > .list-group {
+.bg > .list-group {
   border-top: inherit;
   border-bottom: inherit;
 }
 
-.card > .list-group:first-child {
+.bg > .list-group:first-child {
   border-top-width: 0;
   border-top-left-radius: calc(0.25rem - 1px);
   border-top-right-radius: calc(0.25rem - 1px);
 }
 
-.card > .list-group:last-child {
+.bg > .list-group:last-child {
   border-bottom-width: 0;
   border-bottom-right-radius: calc(0.25rem - 1px);
   border-bottom-left-radius: calc(0.25rem - 1px);
 }
 
-.card > .card-header + .list-group,
-.card > .list-group + .card-footer {
+.bg > .bg-header + .list-group,
+.bg > .list-group + .bg-footer {
   border-top: 0;
 }
 
 
-.card-body {
+.bg-body {
   display: inline-block;
   min-height: 1px;
   padding: 1.25rem;
@@ -455,40 +387,40 @@ div.row {
 }
 
 .table-hover tbody tr:hover {
-  color: #212529;
+  color: #000000;
   background-color: #eaeaf1;
 }
 
 
 
 .btn-light {
-  color: #212529;
+  color: #020202;
   background-color: #f8f9fa;
   border-color: #f8f9fa;
 }
 
 .btn-light:hover {
-  color: #212529;
+  color: #000000;
   background-color: #e2e6ea;
   border-color: #dae0e5;
 }
 
 .btn-light:focus, .btn-light.focus {
-  color: #212529;
+  color: #000000;
   background-color: #e2e6ea;
   border-color: #dae0e5;
   box-shadow: 0 0 0 0.2rem rgba(216, 217, 219, 0.5);
 }
 
 .btn-light.disabled, .btn-light:disabled {
-  color: #212529;
+  color: #000000;
   background-color: #f8f9fa;
   border-color: #f8f9fa;
 }
 
 .btn-light:not(:disabled):not(.disabled):active, .btn-light:not(:disabled):not(.disabled).active,
 .show > .btn-light.dropdown-toggle {
-  color: #212529;
+  color: #000000;
   background-color: #dae0e5;
   border-color: #d3d9df;
 }
@@ -535,7 +467,8 @@ select {
   width: 20em;
   height: 3em;
   line-height: 3;
-  background: #abc6f6;
+  margin-left: auto;
+  background: #7ba7f5;
   overflow: hidden;
   border-radius: .25em;
 }
@@ -564,11 +497,23 @@ select {
 .select:hover::after {
   color: #000;
 }
+.history{
+    display: flex;
+    justify-content:left;
+    align-items: center;
+    height: 50px;
+    color: rgb(243, 20, 20);
+    font-size: 1.8rem;
+    font-weight: 500;
+    font-style: italic;
+    margin-top: 50px;
+}
 
 select.form-select {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   font-size: 0.8rem;
   font-weight: 300;
+  display: flex;
 }
 
 .form-search .add-item {
@@ -599,12 +544,12 @@ select.form-select {
 
 .btn-add {
   margin-right: 10px;
-  background-color: #4d6ef3;
+  background-color: #33fd00;
   border: none;
 }
 
 .btn-add:hover {
-  background-color: #70A5FF;
+  background-color: #bfffb2;
 }
 
 .btn-update {
@@ -626,10 +571,10 @@ select.form-select {
   border-radius: 10px;
   background-color: #c72a2a;
   border: none;
-  padding: 4px 8px 4px 8px;
+  padding: 4px 4px 4px 4px;
   left: -4px;
   color: #fff;
-  width: 64px !important;
+  width: 94px !important;
 }
 .text-bg-red {
   position: relative  ;

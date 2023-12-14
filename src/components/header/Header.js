@@ -27,10 +27,10 @@ const Header = () => {
       <header className="header-upper py-3">
         <div className="container-xxl">
           <div className="row">
-            <div className="col-2 shop ">
-              <h4 className="shop-name">
+            <div className="col-2 app ">
+              <h4 className="app-name">
                 {userDetail?.roles[0] === "ROLE_QL" && (
-                  <Link className="shop-name" to={"/"}>
+                  <Link className="app-name" to={"/business-trip"}>
                     <div className="hqcorp button type3">HQCorp</div>
                   </Link>
                 )}
@@ -69,7 +69,7 @@ const Header = () => {
               {userDetail?.roles[0] === "ROLE_QL" && (
                 <div className="btn-cont">
                   <a href="/partners" className="btn">
-                    PARTNERS
+                    PARTNERS/OBJECTS
                     <span className="line-1"></span>
                     <span className="line-2"></span>
                     <span className="line-3"></span>

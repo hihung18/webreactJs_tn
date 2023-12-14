@@ -4,8 +4,9 @@ import { Table } from "react-bootstrap";
 
 const ProductsManagement = () => {
   const hostUsers = process.env.REACT_APP_HOST_USERS;
-  const hostReport = process.env.REACT_APP_HOST_REPORTS;
-  const hostTrip = process.env.REACT_APP_HOST_TRIPS;
+  const hostReport = process.env.REACT_APP_HOST_REPORTS_1;
+  const hostTask = process.env.REACT_APP_HOST_TASKS;
+  const [tasks, setTasks] = React.useState([]);
 
   const [userDetail] = React.useState(JSON.parse(localStorage.getItem("auth")));
   if (userDetail === null) {
@@ -14,7 +15,6 @@ const ProductsManagement = () => {
 
   const [reports, setReports] = React.useState([]);
   const [users, setUsers] = React.useState([]);
-  const [trips, setTrips] = React.useState([]);
 
   let params = useParams();
 
@@ -42,18 +42,18 @@ const ProductsManagement = () => {
       })
       .catch((err) => console.log(err));
 
-      fetch(hostTrip, {
-        headers: {
-          Authorization: "Bearer " + userDetail.token,
-          "Content-Type": "application/json",
-        },
+    fetch(hostTask, {
+      headers: {
+        Authorization: "Bearer " + userDetail.token,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setTasks(res);
       })
-        .then((res) => res.json())
-        .then((res) => {
-          setTrips(res);
-        })
-        .catch((err) => console.log(err));
-  }, [hostReport, hostUsers, hostTrip, params.id, userDetail.token]);
+      .catch((err) => console.log(err));
+  }, [hostReport, hostUsers, hostTask, params.id, userDetail.token]);
 
   const getDate = (dateString) => {
     const dateObj = new Date(dateString);
@@ -68,55 +68,59 @@ const ProductsManagement = () => {
   };
 
   const getUseNamerById = (id) => {
-    const result = users.find(user => user.userId === id);
+    const result = users.find((user) => user.userId === id);
     if (result) {
       return result.fullName;
     } else {
       return "Unknown User";
     }
-  }
+  };
 
-  const getTripNameById = (id) => {
-    const result = trips.find(trip => trip.businessTripId === id)
+  const getTaskNameById = (id) => {
+    const result = tasks.find((task) => task.taskId === id);
+    console.log(result);
     if (result) {
-        return result.name_trip;
-      } else {
-        return "Unknown";
-      }
-  }
+      return result.nameTask;
+    } else {
+      return "Unknown";
+    }
+  };
 
   return (
     <>
       <div className="main-panel">
         <div className="content-wrapper">
           <div className="act-top"></div>
-          <div className="card">
-            <div className="card-body">
+          <div className="bg">
+            <div className="bg-body">
               <Table className="table-products table-hover">
                 <thead>
-                  <tr>
+                  <tr  style={{ color: "black", fontSize: "14px" }}>
                     <th style={{ width: "80px" }}>STT</th>
-                    <th style={{ width: "100px" }}>BusinessTrip</th>
-                    <th style={{ width: "120px" }}>User</th>
+                    <th style={{ width: "100px" }}>Task Name</th>
+                    {/* <th style={{ width: "120px" }}>User</th> */}
                     <th style={{ width: "200px" }}>Detail</th>
                     <th style={{ width: "100px" }}>Created At</th>
                     <th style={{ width: "160px" }}></th>
-
                   </tr>
                 </thead>
                 <tbody>
                   {reports?.map((report, index) => (
-                    <tr key={index}>
-                      
-                      <td style={{ verticalAlign: 'middle' }}>{index+1}</td>
-                      <td style={{ verticalAlign: 'middle' }}>{getTripNameById(report.businessTripID)}</td>
-                      <td style={{ verticalAlign: 'middle' }}>{getUseNamerById(report.userID)}</td>
-                      <td style={{ verticalAlign: 'middle' }}>{report.report_detail}</td>
-                      <td style={{ verticalAlign: 'middle' }}>{getDate(report.time_cre_rp)}</td>
+                    <tr key={index}  style={{ color: "black", fontSize: "14px" }}>
+                      <td style={{ verticalAlign: "middle" }}>{index + 1}</td>
+                      <td style={{ verticalAlign: "middle" }}>
+                        {getTaskNameById(report.taskID)}
+                      </td>
+
+                      <td style={{ verticalAlign: "middle" }}>
+                        {report.report_detail}
+                      </td>
+                      <td style={{ verticalAlign: "middle" }}>
+                        {getDate(report.time_cre_rp)}
+                      </td>
                       <td>
-                        {
-                          report.imageUrls.map(img => (
-                            <a
+                        {report.imageUrls.map((img) => (
+                          <a
                             href={img}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -131,8 +135,7 @@ const ProductsManagement = () => {
                               }}
                             />
                           </a>
-                          ))
-                        }
+                        ))}
                       </td>
                     </tr>
                   ))}

@@ -3,8 +3,8 @@ const ErrorPage = () => {
     <>
       <div className="main-panel">
         <div className="content-wrapper">
-          <div className="card">
-            <div className="card-body errorPage">
+          <div className="bg">
+            <div className="bg-body errorPage">
               <h1>404</h1>
             </div>
           </div>
@@ -13,5 +13,4 @@ const ErrorPage = () => {
     </>
   )
 }
-
 export default ErrorPage

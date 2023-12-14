@@ -184,21 +184,20 @@ const UsersManagement = () => {
               </select>
             </div>
           </div>
-          <div className="card">
-            <div className="card-body">
+          <div className="bg">
+            <div className="bg-body">
               <Table className="table-products table-hover">
                 <thead>
                   <tr>
-                    <th>STT</th>
-                    <th>Username</th>
-                    <th>Full name</th>
-                    <th>Email</th>
+                    <th style={{ width: "60px" }}>STT</th>
+                    <th style={{ width: "120px" }}>Username</th>
+                    <th style={{ width: "150px" }}>Full name</th>
+                    <th style={{ width: "200px" }}>Email</th>
                     <th>Phone</th>
-                    <th>Address</th>
-                    <th>Token Device</th>
+                    <th style={{ width: "150px" }}>Address</th>
+                    <th style={{ width: "150px" }}>Token Device</th>
                     <th>Role</th>
-                    {/* <th>Update</th>
-                    <th>Delete</th> */}
+                    
                   </tr>
                 </thead>
                 <tbody>

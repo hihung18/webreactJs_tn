@@ -2,6 +2,8 @@ import React from "react";
 import { Button, Table, Modal, Form, Row } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import PostNotification from "../utils";
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const ProductsManagement = () => {
   // Authorization
@@ -65,7 +67,6 @@ const ProductsManagement = () => {
   const [usersQL, setUsersQL] = React.useState([]);
 
   const [businessTripIDToGet, setBusinessTripIDToGet] = React.useState(Number);
-
   const currentDate = new Date();
 
   React.useEffect(() => {
@@ -78,6 +79,8 @@ const ProductsManagement = () => {
       .then((res) => res.json())
       .then((res) => {
         setTrips(res);
+        setTripsFollowStatus(res); 
+        setTripsFollowStatusHistory(res); 
       })
       .catch((err) => console.log(err));
 
@@ -116,6 +119,8 @@ const ProductsManagement = () => {
     })
       .then((res) => res.json())
       .then((res) => {
+        console.log("rates");
+        console.log(res);
         setRates(res);
       })
       .catch((err) => console.log(err));
@@ -130,7 +135,23 @@ const ProductsManagement = () => {
         setPartners(users);
       })
       .catch((err) => console.log(err));
-  }, [hostTrip, hostTask, hostUsers, hostRate, hostPartners, userDetail.token]);
+  }, [hostTrip, hostTask, hostUsers, hostPartners, userDetail.token]);
+
+  const getRates = (tripId) => {
+    fetch("http://localhost:8080/api/rates?businessTripID=" + tripId, {
+      headers: {
+        Authorization: "Bearer " + userDetail.token,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        console.log("rates");
+        console.log(res);
+        setRates(res);
+      })
+      .catch((err) => console.log(err));
+  };
 
   const getDate = (dateString) => {
     const dateObj = new Date(dateString);
@@ -146,6 +167,38 @@ const ProductsManagement = () => {
 
   const createTrip = async () => {
     console.log(tripPost);
+    if (!tripPost.partnerID || tripPost.partnerID === "N") {
+      alert("Please choose a partner!");
+      return;
+    }
+    if (!tripPost.name_trip || tripPost.name_trip.trim() === "") {
+      alert("Please enter BusinessTrip Name!");
+      return;
+    }
+    if (!tripPost.detail_trip || tripPost.detail_trip.trim() === "") {
+      alert("Please enter BusinessTrip Detail!");
+      return;
+    }
+    if (!tripPost.location_trip || tripPost.location_trip.trim() === "") {
+      alert("Please enter BusinessTrip Location!");
+      return;
+    }
+    if (!tripPost.time_begin_trip) {
+      alert("Please choose time begin!");
+      return;
+    }if (!tripPost.time_end_trip) {
+      alert("Please choose time end!");
+      return;
+    }
+    if (tripPost.time_begin_trip && tripPost.time_end_trip) {
+      const beginDate = new Date(tripPost.time_begin_trip);
+      const endDate = new Date(tripPost.time_end_trip);
+  
+      if (endDate < beginDate) {
+        alert("End date before begin date!");
+        return;
+      }
+    }
     const response = await fetch(hostTrip, {
       method: "POST",
       headers: {
@@ -153,12 +206,14 @@ const ProductsManagement = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        businessTripId:0,
         managerID: userDetail.id,
         partnerID: tripPost.partnerID,
         name_trip: tripPost.name_trip,
         detail_trip: tripPost.detail_trip,
         location_trip: tripPost.location_trip,
-        link_googleMap: tripPost.link_googleMap,
+        latitudeTrip: tripPost.latitudeTrip,
+        longitudeTrip: tripPost.longitudeTrip,
         time_begin_trip: tripPost.time_begin_trip,
         time_end_trip: tripPost.time_end_trip,
         time_cre_trip: currentDate,
@@ -167,6 +222,7 @@ const ProductsManagement = () => {
     });
     if (!response.ok) {
       alert("Error!");
+      console.log(response);
       closeAddTrip();
       throw new Error("Error");
     }
@@ -190,6 +246,8 @@ const ProductsManagement = () => {
         name_trip: tripUpdate.name_trip,
         detail_trip: tripUpdate.detail_trip,
         location_trip: tripUpdate.location_trip,
+        latitudeTrip: tripUpdate.latitudeTrip,
+        longitudeTrip: tripUpdate.longitudeTrip,
         time_begin_trip: tripUpdate.time_begin_trip,
         time_end_trip: tripUpdate.time_end_trip,
         time_cre_trip: tripUpdate.time_cre_trip,
@@ -198,6 +256,7 @@ const ProductsManagement = () => {
     });
     if (!response.ok) {
       alert("Error!");
+      
       closeUpdateTrip();
       throw new Error("Error");
     }
@@ -215,7 +274,6 @@ const ProductsManagement = () => {
         "Content-Type": "application/json",
       },
     });
-
     if (!response.ok) {
       alert("Error!");
       throw new Error("Failed to delete user");
@@ -234,7 +292,7 @@ const ProductsManagement = () => {
       },
       body: JSON.stringify({
         businessTripID: businessTripIDToGet,
-        userID: 7,
+        userID: userDetail.id,
         commentRate: ratePost.commentRate,
         time_cre_rate: currentDate,
       }),
@@ -247,11 +305,11 @@ const ProductsManagement = () => {
     const data = await response.json();
     const listToken = data.listTokenDevice;
     if (listToken.length !== 0) {
-      listToken.map(token => {
+      listToken.map((token) => {
         if (token !== "") {
-          PostNotification(token, "", "RATE")
+          PostNotification(token, "", "RATE");
         }
-      })
+      });
     }
     closeAddRate();
     window.location = "/business-trip";
@@ -275,16 +333,27 @@ const ProductsManagement = () => {
       return "Unknown User";
     }
   };
-
-  const getTripNameById = (id) => {
-    const result = trips.find(trip => trip.businessTripId === id)
-    if (result) {
-        return result.name_trip;
-      } else {
-        return "Unknown";
-      }
-  }
-
+  const [tripsFollowStatus, setTripsFollowStatus] = React.useState([]);
+  const SetTripFollowStatus = (statusCode) => {
+    if (statusCode !== -1) {
+      let newTrips = trips.filter((trip) => trip.statusBusinessTrip === statusCode);
+      console.log(newTrips);
+      setTripsFollowStatus(newTrips);
+    } else {
+      setTripsFollowStatus(trips);
+    }
+  };
+  const [tripsFollowStatusHistory, setTripsFollowStatusHistory] = React.useState([]);
+  const SetTripFollowStatusHistory = (statusCode) => {
+    if (statusCode !== -1) {
+      let newTrips = trips.filter((trip) => trip.statusBusinessTrip === statusCode);
+      console.log(newTrips);
+      setTripsFollowStatusHistory(newTrips);
+    } else {
+      console.log(trips);
+      setTripsFollowStatusHistory(trips);
+    }
+  };
   return (
     <>
       <div className="main-panel">
@@ -294,147 +363,149 @@ const ProductsManagement = () => {
               Add Trip
             </Button>
           </div>
-          <div className="card">
-            <div className="card-body">
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: "100px",
-                  color: "black",
-                  fontSize: "40px",
-                }}
-              >
-                CURRENT
+          <div className="bg">
+            <div className="bg-body">
+              <div className="select">
+                <select
+                  className="form-select"
+                  id="select-option"
+                  onChange={(e) => {
+                    SetTripFollowStatus(parseInt(e.target.value));
+                  }}
+                >
+                  <option value={-1}>All</option>
+                  <option value={0}>PREPARING</option>
+                  <option value={1}>PROCESSING</option>
+                </select>
               </div>
               <Table className="table-products table-hover">
                 <thead>
-                  <tr>
-                    <th style={{ width: "80px" }}>STT</th>
+                  <tr style={{ color: "black", fontSize: "14px" }}>
+                    <th style={{ width: "40px" }}>STT</th>
                     <th style={{ width: "80px" }}>Manager</th>
-                    <th style={{ width: "80px" }}>Partner</th>
-                    <th style={{ width: "160px" }}>Name</th>
+                    <th style={{ width: "110px" }}>Partner</th>
+                    <th style={{ width: "200px" }}>Name</th>
                     <th style={{ width: "300px" }}>Detail</th>
-                    <th style={{ width: "100px" }}>Location</th>
-                    <th style={{ width: "100px" }}>Link Google Map</th>
-                    <th style={{ width: "100px" }}>Time begin</th>
+                    <th style={{ width: "250px" }}>Location</th>
+                    <th style={{ width: "100px" }}>Coordinates</th>
+                    <th style={{ width: "120px" }}>Time begin</th>
                     <th style={{ width: "100px" }}>Time end</th>
                     <th style={{ width: "100px" }}>Status</th>
-                    {/* <th style={{ width: "100px" }}>Delete</th>
-                    <th style={{ width: "100px" }}>Tasks</th>
-                    <th style={{ width: "100px" }}>Rates</th>
-                    <th style={{ width: "100px" }}>Reports</th> */}
                   </tr>
                 </thead>
                 <tbody>
-                  {trips
+                  {tripsFollowStatus
                     .filter(
                       (trip) =>
                         trip.statusBusinessTrip === 0 ||
                         trip.statusBusinessTrip === 1
                     )
                     .map((trip, index) => (
-                      <tr key={index}>
+                      <tr key={index} style={{ color: "black", fontSize: "14px" }} >
                         <td>{index + 1}</td>
                         <td>{getUseNamerById(trip.managerID)}</td>
                         <td>{getPartnerNamerById(trip.partnerID)}</td>
                         <td>{trip.name_trip}</td>
                         <td>{trip.detail_trip}</td>
                         <td>{trip.location_trip}</td>
-                        <td>{trip.link_googleMap}</td>
+                        <td>
+                          {trip.latitudeTrip} {trip.longitudeTrip}
+                        </td>
                         <td>{getDate(trip.time_begin_trip)}</td>
                         <td>{getDate(trip.time_end_trip)}</td>
                         <td>
-                          {trip.statusBusinessTrip === 0
-                            ? <text
-                                style={{ width: "60px" }}
-                                className="text-bg-yellow"
-                                >
-                                  PREPARING
-                              </text>
-                            : trip.statusBusinessTrip === 1
-                            ? <text
-                                style={{ width: "60px" }}
-                                className="text-bg-orange"
-                                >
-                                  PROCESSING
-                              </text>
-                            : trip.statusBusinessTrip === 2
-                            ? <text
-                                style={{ width: "60px" }}
-                                className="text-bg-yellowgreen"
-                                >
-                                  FINISHED
-                              </text>
-                            : trip.statusBusinessTrip === 3
-                            ? <text
-                                style={{ width: "60px" }}
-                                className="text-bg-green"
-                                >
-                                  COMPLETED
-                              </text>
-                            : trip.statusBusinessTrip === 4
-                            ? <text
-                                style={{ width: "60px" }}
-                                className="text-bg-red"
-                                >
-                                  CANCELED
-                              </text>
-                            : ""}
+                          {trip.statusBusinessTrip === 0 ? (
+                            <text
+                              style={{ width: "60px" }}
+                              className="text-bg-yellow"
+                            >
+                              PREPARING
+                            </text>
+                          ) : trip.statusBusinessTrip === 1 ? (
+                            <text
+                              style={{ width: "60px" }}
+                              className="text-bg-orange"
+                            >
+                              PROCESSING
+                            </text>
+                          ) : (
+                            ""
+                          )}
                         </td>
 
                         <td>
-                          {trip.statusBusinessTrip === 1 && (
-                            <button
-                              className="btn-delete"
-                              onClick={() => {
-                                setTripUpdate(trip);
-                                openUpdateTrip();
-                              }}
-                            >
-                              CANCEL
-                            </button>
-                          )}
+                          {trip.managerID === userDetail.id &&
+                            trip.statusBusinessTrip === 1 && (
+                              <button
+                                className="btn-delete"
+                                onClick={() => {
+                                  setTripUpdate(trip);
+                                  openUpdateTrip();
+                                }}
+                              >
+                                POSTPONE
+                              </button>
+                            )}
                         </td>
 
                         <td style={{ width: "100px" }}>
-                          {trip.statusBusinessTrip === 0 && (
-                            <button
-                              className="btn-delete"
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    "Are you sure you wish to delete this item?"
+                          {trip.managerID === userDetail.id &&
+                            trip.statusBusinessTrip === 0 && (
+                              <button
+                                className="btn-delete"
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      "Are you sure you wish to delete this item?"
+                                    )
                                   )
-                                )
-                                  deleteTrip(trip.businessTripId);
-                              }}
-                            >
-                              delete
-                            </button>
-                          )}
+                                    deleteTrip(trip.businessTripId);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            )}
                         </td>
                         <td>
-                          <Link to={"/tasks/" + trip.businessTripId}>
-                            <button className="btn-update">Tasks</button>
+                          <Link
+                            to={
+                              "/tasks/" +
+                              trip.businessTripId +
+                              "/manager/" +
+                              trip.managerID +
+                              "/status/" +
+                              trip.statusBusinessTrip
+                            }
+                          >
+                            <button
+                              style={{ width: "80px" }}
+                              className="btn-update"
+                            >
+                              Tasks
+                            </button>
                           </Link>
                         </td>
-                        <td style={{ paddingLeft: "34px" }}>
+                        <td >
                           <button
-                            style={{ width: "80px" }}
+                            style={{ width: "100px" }}
                             className="btn-update"
                             onClick={() => {
                               setBusinessTripIDToGet(trip.businessTripId); // Make sure it matches the actual property name
+                              getRates(trip.businessTripId);
                               openShowRate();
                             }}
                           >
-                            Rates
+                            Conversation 
                           </button>
                         </td>
                         <td>
-                          <Link to={"/reports/" + trip.businessTripId}>
-                            <button className="btn-update">Reports</button>
+                          <Link to={"/reports-trip/" + trip.businessTripId}>
+                            <button
+                              style={{ width: "80px" }}
+                              className="btn-update"
+                            >
+                              Review
+                            </button>
                           </Link>
                         </td>
                       </tr>
@@ -442,141 +513,142 @@ const ProductsManagement = () => {
                 </tbody>
               </Table>
 
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: "100px",
-                  color: "black",
-                  fontSize: "40px",
-                }}
-              >
+              <div className="history">
                 HISTORY
               </div>
-
+              <div className="select">
+                <select
+                  className="form-select"
+                  id="select-option"
+                  onChange={(e) => {
+                    SetTripFollowStatusHistory(parseInt(e.target.value));
+                  }}
+                >
+                  <option value={-1}>All</option>
+                  <option value={2}>FINISHED</option>
+                  <option value={3}>COMPLETED</option>
+                  <option value={4}>POSTPONE</option>
+                </select>
+              </div>
               <Table className="table-products table-hover">
                 <thead>
-                  <tr>
+                  <tr style={{ color: "black", fontSize: "14px" }}>
                     <th style={{ width: "60px" }}>STT</th>
                     <th style={{ width: "80px" }}>Manager</th>
                     <th style={{ width: "80px" }}>Partner</th>
                     <th style={{ width: "130px" }}>Name</th>
-                    <th style={{ width: "220px" }}>Detail</th>
-                    <th style={{ width: "90px" }}>Location</th>
-                    <th style={{ width: "340px" }}>Link Google Map</th>
+                    <th style={{ width: "250px" }}>Detail</th>
+                    <th style={{ width: "250px" }}>Location</th>
+                    <th style={{ width: "100px" }}>Coordinates</th>
                     <th style={{ width: "100px" }}>Time begin</th>
                     <th style={{ width: "100px" }}>Time end</th>
                     <th style={{ width: "100px" }}>Status</th>
-                    
                   </tr>
                 </thead>
                 <tbody>
-                  {trips
+                  {tripsFollowStatusHistory
                     .filter(
                       (trip) =>
                         trip.statusBusinessTrip !== 0 &&
                         trip.statusBusinessTrip !== 1
                     )
                     .map((trip, index) => (
-                      <tr key={index}>
+                      <tr key={index} style={{ color: "black", fontSize: "14px" }}>
                         <td>{index + 1}</td>
                         <td>{getUseNamerById(trip.managerID)}</td>
                         <td>{getPartnerNamerById(trip.partnerID)}</td>
                         <td>{trip.name_trip}</td>
                         <td>{trip.detail_trip}</td>
                         <td>{trip.location_trip}</td>
-                        <td>{trip.link_googleMap}</td>
+                        <td>
+                          {trip.latitudeTrip} {trip.longitudeTrip}
+                        </td>
                         <td>{getDate(trip.time_begin_trip)}</td>
                         <td>{getDate(trip.time_end_trip)}</td>
                         <td>
-                        {trip.statusBusinessTrip === 0
-                            ? <text
-                                style={{ width: "60px" }}
-                                className="text-bg-yellow"
-                                >
-                                  PREPARING
-                              </text>
-                            : trip.statusBusinessTrip === 1
-                            ? <text
-                                style={{ width: "60px" }}
-                                className="text-bg-orange"
-                                >
-                                  PROCESSING
-                              </text>
-                            : trip.statusBusinessTrip === 2
-                            ? <text
-                                style={{ width: "60px" }}
-                                className="text-bg-yellowgreen"
-                                >
-                                  FINISHED
-                              </text>
-                            : trip.statusBusinessTrip === 3
-                            ? <text
-                                style={{ width: "60px" }}
-                                className="text-bg-green"
-                                >
-                                  COMPLETED
-                              </text>
-                            : trip.statusBusinessTrip === 4
-                            ? <text
-                                style={{ width: "60px" }}
-                                className="text-bg-red"
-                                >
-                                  CANCELED
-                              </text>
-                            : ""}
-                        </td>
-
-                        {/* <td>
-                        <button
-                          className="btn-update"
-                          onClick={() => {
-                            setTripUpdate(trip);
-                            openUpdateTrip();
-                          }}
-                        >
-                          update
-                        </button>
-                      </td> */}
-
-                        <td style={{ width: "100px" }}>
-                          {trip.statusBusinessTrip === 0 && (
-                            <button
-                              className="btn-delete"
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    "Are you sure you wish to delete this item?"
-                                  )
-                                )
-                                  deleteTrip(trip.businessTripId);
-                              }}
+                          { trip.statusBusinessTrip === 2 ? (
+                            <text
+                              style={{ width: "60px" }}
+                              className="text-bg-yellowgreen"
                             >
-                              delete
-                            </button>
+                              FINISHED
+                            </text>
+                          ) : trip.statusBusinessTrip === 3 ? (
+                            <text
+                              style={{ width: "60px" }}
+                              className="text-bg-green"
+                            >
+                              COMPLETED
+                            </text>
+                          ) : trip.statusBusinessTrip === 4 ? (
+                            <text
+                              style={{ width: "60px" }}
+                              className="text-bg-red"
+                            >
+                              POSTPONED
+                            </text>
+                          ) : (
+                            ""
                           )}
                         </td>
+                        <td style={{ width: "100px" }}>
+                          {trip.statusBusinessTrip === 0 &&
+                            userDetail.id === trip.managerID && (
+                              <button
+                                className="btn-delete"
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      "Are you sure you wish to delete this item?"
+                                    )
+                                  )
+                                    deleteTrip(trip.businessTripId);
+                                }}
+                              >
+                                delete
+                              </button>
+                            )}
+                        </td>
                         <td>
-                          <Link to={"/tasks/" + trip.businessTripId}>
-                            <button className="btn-update">Tasks</button>
+                          <Link
+                            to={
+                              "/tasks/" +
+                              trip.businessTripId +
+                              "/manager/" +
+                              trip.managerID +
+                              "/status/" +
+                              trip.statusBusinessTrip
+                            }
+                          >
+                            <button
+                              style={{ width: "80px" }}
+                              className="btn-update"
+                            >
+                              Tasks
+                            </button>
                           </Link>
                         </td>
-                        <td style={{ paddingLeft: "34px" }}>
+                        <td >
                           <button
-                            style={{ width: "80px" }}
+                            style={{ width: "100px" }}
                             className="btn-update"
                             onClick={() => {
-                              setBusinessTripIDToGet(trip.businessTripId); // Make sure it matches the actual property name
+                              setBusinessTripIDToGet(trip.businessTripId);
+                              getRates(trip.businessTripId); // Make sure it matches the actual property name
                               openShowRate();
                             }}
                           >
-                            Rates
+                            Conversation 
                           </button>
                         </td>
                         <td>
-                          <Link to={"/reports/" + trip.businessTripId}>
-                            <button className="btn-update">Reports</button>
+                          <Link to={"/reports-trip/" + trip.businessTripId}>
+                            <button
+                              style={{ width: "80px" }}
+                              className="btn-update"
+                            >
+                              Review
+                            </button>
                           </Link>
                         </td>
                       </tr>
@@ -661,7 +733,7 @@ const ProductsManagement = () => {
                   <Form.Control
                     id="inputLocation"
                     type="text"
-                    placeholder="Locatiom"
+                    placeholder="Location"
                     onChange={(e) =>
                       setTripPost({
                         ...tripPost,
@@ -672,56 +744,73 @@ const ProductsManagement = () => {
                 </Form.Group>
 
                 <Form.Group as={Row} className="mp-3">
-                  <Form.Label>Link Google Map</Form.Label>
+                  <Form.Label>Latitude Trip</Form.Label>
                   <Form.Control
-                    id="inputLink"
-                    type="text"
-                    placeholder="Link"
+                    id="inputLatitudeTrip"
+                    type="Number"
+                    placeholder="LatitudeTrip"
                     onChange={(e) =>
                       setTripPost({
                         ...tripPost,
-                        link_googleMap: e.target.value,
+                        latitudeTrip: parseFloat(e.target.value),
                       })
                     }
                   />
                 </Form.Group>
 
                 <Form.Group as={Row} className="mp-3">
-                  <Form.Label>Time Begin</Form.Label>
+                  <Form.Label>Longititude Trip</Form.Label>
                   <Form.Control
-                    id="inputTimeBegin"
-                    type="text"
-                    placeholder="yyyy-mm-dd"
+                    id="inputLongtitudeTrip"
+                    type="Number"
+                    placeholder="Longititude Trip"
                     onChange={(e) =>
                       setTripPost({
                         ...tripPost,
-                        time_begin_trip: e.target.value,
+                        longitudeTrip: parseFloat(e.target.value),
                       })
                     }
                   />
                 </Form.Group>
 
                 <Form.Group as={Row} className="mp-3">
-                  <Form.Label>Time End</Form.Label>
-                  <Form.Control
-                    id="inputTimeEnd"
-                    type="text"
-                    placeholder="yyyy-mm-dd"
-                    onChange={(e) =>
-                      setTripPost({
-                        ...tripPost,
-                        time_end_trip: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
+                  <Form.Label>Time Begin Trip</Form.Label>
+                    <DatePicker
+                          selected={tripPost.time_begin_trip} 
+                          onChange={(date) => {
+                            setTripPost({
+                              ...tripPost,
+                              time_begin_trip: date, 
+                            });
+                          }}
+                          dateFormat="yyyy-MM-dd" 
+                          placeholderText="yyyy-mm-dd" 
+                      />
+                  </Form.Group>
+                
+                  <Form.Group as={Row} className="mp-3">
+                  <Form.Label>Time End Trip</Form.Label>
+                    <DatePicker
+                          selected={tripPost.time_end_trip} 
+                          onChange={(date) => {
+                            setTripPost({
+                              ...tripPost,
+                              time_end_trip: date, 
+                            });
+                          }}
+                          dateFormat="yyyy-MM-dd" 
+                          placeholderText="yyyy-mm-dd" 
+                      />
+                  </Form.Group>
               </Form>
             </Modal.Body>
             <Modal.Footer>
               <Button variant="secondary" onClick={closeAddTrip}>
                 Close
               </Button>
-              <Button variant="primary" onClick={createTrip}>
+              <Button variant="primary" onClick={
+                createTrip
+                }>
                 Submit
               </Button>
             </Modal.Footer>
@@ -770,7 +859,7 @@ const ProductsManagement = () => {
                   />
                 </Form.Group>
 
-                <Form.Group as={Row} className="mp-3">
+                {/* <Form.Group as={Row} className="mp-3">
                   <Form.Label>Location</Form.Label>
                   <Form.Control
                     placeholder={tripUpdate.location_trip}
@@ -792,7 +881,7 @@ const ProductsManagement = () => {
                     placeholder={getDate(tripUpdate.time_end_trip)}
                     readOnly={true}
                   />
-                </Form.Group>
+                </Form.Group> */}
 
                 <Form.Group as={Row} className="mp-3">
                   <Form.Label>Status</Form.Label>
@@ -804,12 +893,8 @@ const ProductsManagement = () => {
                       })
                     }
                   >
-                    {/* <option value={0} >Preparing</option>
-                    <option value={1}>Processing</option>
-                    <option value={2}>Finishing</option>
-                    <option value={3}>Completed</option> */}
                     <option value="NN">--Select--</option>
-                    <option value={4}>Canceled</option>
+                    <option value={4}>POSTPONED</option>
                   </Form.Select>
                 </Form.Group>
               </Form>
@@ -833,47 +918,40 @@ const ProductsManagement = () => {
           {/* view rates */}
           <Modal show={showRate} onHide={closeShowRate}>
             <Modal.Header closeButton>
-              <Modal.Title>Rates</Modal.Title>
+              <Modal.Title>Conversation </Modal.Title>
             </Modal.Header>
             <Modal.Body>
               <Table className="table-products table-hover">
                 <thead>
                   <tr>
                     <th style={{ width: "80px" }}>STT</th>
-                    <th style={{ width: "200px" }}>Business Trip</th>
+                    {/* <th style={{ width: "200px" }}>Business Trip</th> */}
                     <th style={{ width: "80px" }}>User</th>
                     <th style={{ width: "140px" }}>Comment</th>
                     <th style={{ width: "100px" }}>Created At</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rates
-                    .filter(
-                      (rate) => rate.businessTripID === businessTripIDToGet
-                    )
-                    .map((rate, index) => (
-                      <tr key={index}>
-                        <td>{index + 1}</td>
-                        <td>{getTripNameById(rate.businessTripID)}</td>
-                        <td>{getUseNamerById(rate.userID)}</td>
-                        <td>{rate.commentRate}</td>
-                        <td>{getDate(rate.time_cre_rate)}</td>
-                      </tr>
-                    ))}
+                  {rates.map((rate, index) => (
+                    <tr key={index}>
+                      <td>{index + 1}</td>
+                      {/* <td>{getTripNameById(rate.businessTripID)}</td> */}
+                      <td>{getUseNamerById(rate.userID)}</td>
+                      <td>{rate.commentRate}</td>
+                      <td>{getDate(rate.time_cre_rate)}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </Table>
             </Modal.Body>
             <Modal.Footer>
-            <Button variant="primary" onClick={openAddRate}>
-                Add
-              </Button>
               <Button variant="secondary" onClick={closeShowRate}>
                 Close
               </Button>
             </Modal.Footer>
           </Modal>
 
-          {/* add rate */}
+          {/* add rate
           <Modal className="modal" show={showAddRate} onHide={closeAddRate}>
             <Modal.Header closeButton>
               <Modal.Title>Add Rate</Modal.Title>
@@ -904,7 +982,7 @@ const ProductsManagement = () => {
                 Submit
               </Button>
             </Modal.Footer>
-          </Modal>
+          </Modal> */}
         </div>
       </div>
     </>
